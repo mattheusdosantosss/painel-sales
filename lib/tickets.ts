@@ -29,10 +29,14 @@ export async function getPainel(): Promise<Painel> {
     }
   }
 
+  const proprietarios = [...new Set(tickets.map((t) => t.proprietario).filter((p) => p && p !== "—"))]
+    .sort((a, b) => a.localeCompare(b, "pt-BR"));
+
   return {
     tickets,
     stages,
     areas: ordenarAreas(tickets),
+    proprietarios,
     total: tickets.length,
     fonte: { hubspot },
     atualizadoEm: new Date().toISOString(),

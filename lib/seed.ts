@@ -14,6 +14,17 @@ export const SEED_STAGES: Stage[] = [
 
 const STAGE = new Map(SEED_STAGES.map((s) => [s.id, s]));
 
+// Proprietário (responsável) por ticket no snapshot. A grande maioria é do
+// Mattheus; estes ids são do Leonardo Marcondes Moreira.
+const PROPRIETARIO_LEONARDO = new Set([
+  "46155090009", "46068263178", "46108667750", "46074613885",
+]);
+function proprietarioDe(id: string): { nome: string; id: string } {
+  return PROPRIETARIO_LEONARDO.has(id)
+    ? { nome: "Leonardo Marcondes Moreira", id: "79453134" }
+    : { nome: "Mattheus Faleiro dos Santos", id: "91810791" };
+}
+
 // [id, subject, stageId, area, solicitante, email, dataPrevista, criadoEm]
 type Row = [string, string, string, string, string, string, string, string];
 
@@ -50,6 +61,7 @@ const ROWS: Row[] = [
 export const SEED_TICKETS: Ticket[] = ROWS.map(
   ([id, nome, statusId, area, solicitante, email, dataPrevista, criadoEm]) => {
     const st = STAGE.get(statusId);
+    const prop = proprietarioDe(id);
     return {
       id,
       nome,
@@ -58,6 +70,8 @@ export const SEED_TICKETS: Ticket[] = ROWS.map(
       statusOrder: st?.order ?? 999,
       isClosed: st?.isClosed ?? false,
       area,
+      proprietario: prop.nome,
+      proprietarioId: prop.id,
       solicitante,
       email,
       dataPrevista,

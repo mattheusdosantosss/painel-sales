@@ -19,6 +19,7 @@ const PROPS = [
   "subject",
   "hs_pipeline_stage",
   "area_do_solicitante",
+  "hubspot_owner_id",
   "solicitante",
   "e_mail_do_solicitante",
   "data_prevista_de_entrega",
@@ -66,6 +67,28 @@ export async function buscarEstagios(): Promise<Stage[]> {
   return stages.sort((a, b) => a.order - b.order);
 }
 
+// Mapa ownerId -> nome do proprietário. Lê todos os owners da conta (paginado)
+// e monta o índice; assim resolvemos o "Proprietário do ticket" de uma vez.
+export async function buscarProprietarios(): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  let after: string | undefined = undefined;
+  for (let i = 0; i < 20; i++) {
+    const url = new URL(`${BASE}/crm/v3/owners`);
+    url.searchParams.set("limit", "500");
+    if (after) url.searchParams.set("after", after);
+    const res = await fetch(url.toString(), { headers: headers(), cache: "no-store" });
+    if (!res.ok) throw new Error(`HubSpot owners ${res.status}`);
+    const data = await res.json();
+    for (const o of data.results ?? []) {
+      const nome = `${(o.firstName ?? "").trim()} ${(o.lastName ?? "").trim()}`.trim() || (o.email ?? "").trim();
+      if (o.id != null) map.set(String(o.id), nome || "—");
+    }
+    after = data.paging?.next?.after;
+    if (!after) break;
+  }
+  return map;
+}
+
 // Pagina todos os tickets do pipeline cujas áreas estão na lista do time de Sales.
 async function buscarTickets(): Promise<HsTicket[]> {
   const out: HsTicket[] = [];
@@ -104,13 +127,18 @@ export async function getHubspotPainel(): Promise<{
   tickets: Ticket[];
   stages: Stage[];
 }> {
-  const [stages, raw] = await Promise.all([buscarEstagios(), buscarTickets()]);
+  const [stages, raw, owners] = await Promise.all([
+    buscarEstagios(),
+    buscarTickets(),
+    buscarProprietarios().catch(() => new Map<string, string>()),
+  ]);
   const byId = new Map(stages.map((s) => [s.id, s]));
 
   const tickets: Ticket[] = raw.map((t) => {
     const p = t.properties;
     const stageId = (p.hs_pipeline_stage ?? "").trim();
     const st = byId.get(stageId);
+    const ownerId = (p.hubspot_owner_id ?? "").trim();
     return {
       id: t.id ?? p.hs_object_id ?? "",
       nome: (p.subject ?? "").trim() || "(sem título)",
@@ -119,6 +147,8 @@ export async function getHubspotPainel(): Promise<{
       statusOrder: st?.order ?? 999,
       isClosed: st?.isClosed ?? false,
       area: (p.area_do_solicitante ?? "").trim(),
+      proprietario: ownerId ? owners.get(ownerId) || "—" : "—",
+      proprietarioId: ownerId,
       solicitante: (p.solicitante ?? "").trim(),
       email: (p.e_mail_do_solicitante ?? "").trim(),
       dataPrevista: toDateOnly(p.data_prevista_de_entrega),

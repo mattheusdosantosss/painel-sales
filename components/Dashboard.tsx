@@ -5,6 +5,9 @@ import type { Painel, Ticket, Stage } from "@/lib/types";
 
 /* ---------------- helpers ---------------- */
 function fmt(n: number) { return n.toLocaleString("pt-BR"); }
+function iniciais(s: string) {
+  return s.split(" ").filter(Boolean).slice(0, 2).map((x) => x[0]).join("").toUpperCase() || "?";
+}
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 function parseData(d: string): Date | null {
@@ -61,12 +64,13 @@ function Bars({ data, color }: { data: { label: string; value: number; tone?: st
 }
 
 /* ---------------- tabela ---------------- */
-type SortKey = "nome" | "status" | "area" | "solicitante" | "dataPrevista" | "criadoEm";
+type SortKey = "nome" | "status" | "area" | "proprietario" | "solicitante" | "dataPrevista" | "criadoEm";
 
-function TicketsTable({ tickets, stages, areas }: { tickets: Ticket[]; stages: Stage[]; areas: string[] }) {
+function TicketsTable({ tickets, stages, areas, proprietarios }: { tickets: Ticket[]; stages: Stage[]; areas: string[]; proprietarios: string[] }) {
   const [q, setQ] = useState("");
   const [area, setArea] = useState("");
   const [status, setStatus] = useState("");
+  const [prop, setProp] = useState("");
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "criadoEm", dir: -1 });
 
   const filtrados = useMemo(() => {
@@ -74,8 +78,9 @@ function TicketsTable({ tickets, stages, areas }: { tickets: Ticket[]; stages: S
     let arr = tickets.filter((t) => {
       if (area && t.area !== area) return false;
       if (status && t.status !== status) return false;
+      if (prop && t.proprietario !== prop) return false;
       if (termo) {
-        const blob = `${t.nome} ${t.solicitante} ${t.email} ${t.area} ${t.status}`.toLowerCase();
+        const blob = `${t.nome} ${t.solicitante} ${t.email} ${t.area} ${t.status} ${t.proprietario}`.toLowerCase();
         if (!blob.includes(termo)) return false;
       }
       return true;
@@ -94,7 +99,7 @@ function TicketsTable({ tickets, stages, areas }: { tickets: Ticket[]; stages: S
       return 0;
     });
     return arr;
-  }, [tickets, q, area, status, sort]);
+  }, [tickets, q, area, status, prop, sort]);
 
   function th(key: SortKey, label: string) {
     const ativo = sort.key === key;
@@ -117,6 +122,10 @@ function TicketsTable({ tickets, stages, areas }: { tickets: Ticket[]; stages: S
           <option value="">Todos os status</option>
           {stages.map((s) => <option key={s.id} value={s.label}>{s.label}</option>)}
         </select>
+        <select className="sel" value={prop} onChange={(e) => setProp(e.target.value)}>
+          <option value="">Todos os proprietários</option>
+          {proprietarios.map((p) => <option key={p} value={p}>{p}</option>)}
+        </select>
         <span className="tcount">{fmt(filtrados.length)} / {fmt(tickets.length)}</span>
       </div>
 
@@ -128,6 +137,7 @@ function TicketsTable({ tickets, stages, areas }: { tickets: Ticket[]; stages: S
                 {th("nome", "Nome do ticket")}
                 {th("status", "Status")}
                 {th("area", "Área do solicitante")}
+                {th("proprietario", "Proprietário")}
                 {th("solicitante", "Solicitante")}
                 <th>E-mail do solicitante</th>
                 {th("dataPrevista", "Data prevista")}
@@ -141,6 +151,11 @@ function TicketsTable({ tickets, stages, areas }: { tickets: Ticket[]; stages: S
                     <td className="t-nome" title={t.nome}>{t.nome}</td>
                     <td><StatusBadge label={t.status} isClosed={t.isClosed} /></td>
                     <td><span className="badge area">{t.area || "—"}</span></td>
+                    <td>
+                      {t.proprietario && t.proprietario !== "—" ? (
+                        <span className="owner"><span className="oav">{iniciais(t.proprietario)}</span>{t.proprietario}</span>
+                      ) : "—"}
+                    </td>
                     <td className="t-sol">{t.solicitante || "—"}</td>
                     <td className="t-email">{t.email ? <a href={`mailto:${t.email}`}>{t.email}</a> : "—"}</td>
                     <td className={`t-when ${atrasado ? "atrasado" : ""} ${!t.dataPrevista ? "semdata" : ""}`}>
@@ -151,7 +166,7 @@ function TicketsTable({ tickets, stages, areas }: { tickets: Ticket[]; stages: S
                 );
               })}
               {!filtrados.length && (
-                <tr><td colSpan={6} className="empty">nenhum ticket com esses filtros</td></tr>
+                <tr><td colSpan={7} className="empty">nenhum ticket com esses filtros</td></tr>
               )}
             </tbody>
           </table>
@@ -189,7 +204,7 @@ export default function Dashboard({ initial }: { initial: Painel }) {
     }
   }
 
-  const { tickets, stages, areas, fonte } = data;
+  const { tickets, stages, areas, proprietarios, fonte } = data;
 
   const kpis = useMemo(() => {
     const concluidas = tickets.filter((t) => t.isClosed).length;
@@ -287,7 +302,7 @@ export default function Dashboard({ initial }: { initial: Painel }) {
           </div>
           <div className="right"><div className="rlab">Tickets</div><div className="rnum">{fmt(tickets.length)}</div></div>
         </div>
-        <TicketsTable tickets={tickets} stages={stages} areas={areas} />
+        <TicketsTable tickets={tickets} stages={stages} areas={areas} proprietarios={proprietarios} />
       </div>
 
       <div className="footer">PSA · Painel de Sales · fonte: HubSpot {fonte.hubspot ? "(ao vivo)" : "(snapshot)"}</div>
