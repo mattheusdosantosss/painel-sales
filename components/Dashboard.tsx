@@ -5,9 +5,6 @@ import type { Painel, Ticket, Stage } from "@/lib/types";
 
 /* ---------------- helpers ---------------- */
 function fmt(n: number) { return n.toLocaleString("pt-BR"); }
-function iniciais(s: string) {
-  return s.split(" ").filter(Boolean).slice(0, 2).map((x) => x[0]).join("").toUpperCase() || "?";
-}
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 function parseData(d: string): Date | null {
@@ -151,11 +148,7 @@ function TicketsTable({ tickets, stages, areas, proprietarios }: { tickets: Tick
                     <td className="t-nome" title={t.nome}>{t.nome}</td>
                     <td><StatusBadge label={t.status} isClosed={t.isClosed} /></td>
                     <td><span className="badge area">{t.area || "—"}</span></td>
-                    <td>
-                      {t.proprietario && t.proprietario !== "—" ? (
-                        <span className="owner"><span className="oav">{iniciais(t.proprietario)}</span>{t.proprietario}</span>
-                      ) : "—"}
-                    </td>
+                    <td className="t-sol">{t.proprietario || "—"}</td>
                     <td className="t-sol">{t.solicitante || "—"}</td>
                     <td className="t-email">{t.email ? <a href={`mailto:${t.email}`}>{t.email}</a> : "—"}</td>
                     <td className={`t-when ${atrasado ? "atrasado" : ""} ${!t.dataPrevista ? "semdata" : ""}`}>
