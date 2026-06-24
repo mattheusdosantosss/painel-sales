@@ -7,9 +7,12 @@ Lista os tickets cujo **Área do solicitante** é uma destas:
 `Comercial`, `Comercial | B2B`, `Comercial | B2C`, `Farmer | B2B`, `CS | B2B`, `CS | B2C`.
 
 Colunas (espelham a visão do HubSpot): **Nome do ticket · Status · Área do
-solicitante · Solicitante · E-mail do solicitante · Data prevista de entrega**.
-Tem busca, filtros por área e status, ordenação por coluna, KPIs e gráficos
-por status e por área.
+solicitante · Proprietário · Solicitante · E-mail do solicitante · Data prevista
+de entrega**. Tem busca, filtros por área, status e proprietário, ordenação por
+coluna, KPIs e gráficos por status e por área.
+
+O **Proprietário** é o "Proprietário do ticket" do HubSpot (`hubspot_owner_id`),
+resolvido para nome via API de owners.
 
 Sem `HUBSPOT_TOKEN` ele já renderiza com um **snapshot real** do HubSpot (seed).
 Com o token, fica **ao vivo** — inclusive os rótulos e a ordem dos status vêm
@@ -29,7 +32,7 @@ npm run dev
 2. Na Vercel: New Project → importe o repo.
 3. Em **Settings → Environment Variables**:
    - `HUBSPOT_TOKEN` = token de Private App
-     (scope: `crm.objects.tickets.read`).
+     (scopes: `crm.objects.tickets.read` + `crm.objects.owners.read`).
    - (opcional) `HUBSPOT_TICKETS_PIPELINE` e `HUBSPOT_AREAS` se mudarem no HubSpot.
 4. Deploy.
 
