@@ -76,6 +76,8 @@ export const SEED_TICKETS: Ticket[] = ROWS.map(
       email,
       dataPrevista,
       criadoEm,
+      prioridadeNivel: "",
+      prioridadeOrdem: null,
     };
   }
 );

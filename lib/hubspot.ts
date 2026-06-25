@@ -24,6 +24,8 @@ const PROPS = [
   "e_mail_do_solicitante",
   "data_prevista_de_entrega",
   "createdate",
+  "hs_ticket_priority",
+  "prioridade_de_demandas",
 ];
 
 type HsTicket = { id?: string; properties: Record<string, string | null> };
@@ -123,6 +125,27 @@ async function buscarTickets(): Promise<HsTicket[]> {
   return out;
 }
 
+// Grava a prioridade (nível e/ou ordem) de volta no ticket do HubSpot.
+// nivel/ordem === undefined => não mexe naquele campo. null/"" => limpa o campo.
+// Status 403 = token sem o scope crm.objects.tickets.write.
+export async function salvarPrioridade(
+  id: string,
+  nivel: string | null | undefined,
+  ordem: number | null | undefined
+): Promise<{ ok: boolean; status: number }> {
+  const properties: Record<string, string> = {};
+  if (nivel !== undefined) properties.hs_ticket_priority = nivel ?? "";
+  if (ordem !== undefined) properties.prioridade_de_demandas = ordem == null ? "" : String(ordem);
+  if (Object.keys(properties).length === 0) return { ok: true, status: 200 };
+  const res = await fetch(`${BASE}/crm/v3/objects/tickets/${id}`, {
+    method: "PATCH",
+    headers: headers(),
+    body: JSON.stringify({ properties }),
+    cache: "no-store",
+  });
+  return { ok: res.ok, status: res.status };
+}
+
 export async function getHubspotPainel(): Promise<{
   tickets: Ticket[];
   stages: Stage[];
@@ -153,6 +176,10 @@ export async function getHubspotPainel(): Promise<{
       email: (p.e_mail_do_solicitante ?? "").trim(),
       dataPrevista: toDateOnly(p.data_prevista_de_entrega),
       criadoEm: toISO(p.createdate),
+      prioridadeNivel: (p.hs_ticket_priority ?? "").trim(),
+      prioridadeOrdem: p.prioridade_de_demandas != null && p.prioridade_de_demandas !== ""
+        ? Number(p.prioridade_de_demandas)
+        : null,
     };
   });
 

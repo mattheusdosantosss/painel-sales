@@ -12,6 +12,17 @@ export type Ticket = {
   email: string;        // e_mail_do_solicitante
   dataPrevista: string; // "YYYY-MM-DD" ou ""
   criadoEm: string;     // ISO ou ""
+  // prioridade definida pelo time (write-back no HubSpot)
+  prioridadeNivel: string;       // "" | "LOW" | "MEDIUM" | "HIGH" | "URGENT" (hs_ticket_priority)
+  prioridadeOrdem: number | null; // posição na fila (prioridade_de_demandas)
+};
+
+export const NIVEIS = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
+export const NIVEL_LABEL: Record<string, string> = {
+  LOW: "Baixa",
+  MEDIUM: "Média",
+  HIGH: "Alta",
+  URGENT: "Urgente",
 };
 
 export type Stage = {
