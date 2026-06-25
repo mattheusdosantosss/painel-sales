@@ -26,6 +26,8 @@ function estaAtrasado(t: Ticket): boolean {
   const dt = parseData(t.dataPrevista);
   return !!dt && dt.getTime() < hojeZero().getTime();
 }
+// "Em andamento" = já está em execução: fica fixo no topo e não é repriorizado.
+function emAndamento(t: Ticket): boolean { return /andamento/i.test(t.status); }
 
 // tom visual do status a partir do estágio
 function toneDe(label: string, isClosed: boolean): string {
@@ -60,16 +62,20 @@ function PriorityCell({
   priorizar: (id: string) => void;
   tirarDaFila: (id: string) => void;
 }) {
+  const travado = emAndamento(t);
   const nivelBadge = t.prioridadeNivel ? (
     <span className={`badge ${NIVEL_TONE[t.prioridadeNivel] ?? ""}`}><span className="bd" />{NIVEL_LABEL[t.prioridadeNivel] ?? t.prioridadeNivel}</span>
   ) : null;
 
-  if (!canEdit) {
-    if (!t.prioridadeNivel && !info) return <span className="faint">—</span>;
+  // Em andamento: prioridade congelada (sem controles), mesmo para editor.
+  if (!canEdit || travado) {
+    const rank = !travado && info ? <span className="rankpill">#{info.rank}</span> : null;
+    if (!nivelBadge && !rank && !travado) return <span className="faint">—</span>;
     return (
       <span className="prcell">
-        {nivelBadge}
-        {info && <span className="rankpill">#{info.rank}</span>}
+        {nivelBadge || (travado ? <span className="faint">—</span> : null)}
+        {rank}
+        {travado && <span className="lockpill" title="Em andamento — urgência e ordem não são mais alteradas">em execução</span>}
       </span>
     );
   }
@@ -153,6 +159,9 @@ function TicketsTable({
     const { key, dir } = sort;
     const nivelRank: Record<string, number> = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1, "": 0 };
     arr = arr.slice().sort((a, b) => {
+      // "Em andamento" sempre no topo, independente do critério de ordenação.
+      const ae = emAndamento(a) ? 0 : 1, be = emAndamento(b) ? 0 : 1;
+      if (ae !== be) return ae - be;
       let av: string | number = "", bv: string | number = "";
       if (key === "status") { av = a.statusOrder; bv = b.statusOrder; }
       else if (key === "prioridade") {
@@ -226,7 +235,7 @@ function TicketsTable({
               {filtrados.map((t) => {
                 const atrasado = estaAtrasado(t);
                 return (
-                  <tr className="row" key={t.id}>
+                  <tr className={`row ${emAndamento(t) ? "row-doing" : ""}`} key={t.id}>
                     <td className="t-nome" title={t.nome}>{t.nome}</td>
                     <td><PriorityCell
                       t={t} canEdit={canEdit} info={filaInfo.get(t.id)} saving={savingIds.has(t.id)}
@@ -302,7 +311,8 @@ export default function Dashboard({ initial }: { initial: Painel }) {
   // fila de prioridade = tickets com ordem definida, em ordem crescente.
   // a posição exibida (#1, #2…) é sempre recalculada a partir disso.
   const filaInfo = useMemo(() => {
-    const fila = tickets.filter((t) => t.prioridadeOrdem != null)
+    // a fila numerada é só dos que ainda aguardam — "Em andamento" sai da fila.
+    const fila = tickets.filter((t) => t.prioridadeOrdem != null && !emAndamento(t))
       .sort((a, b) => (a.prioridadeOrdem! - b.prioridadeOrdem!) || a.criadoEm.localeCompare(b.criadoEm));
     const m = new Map<string, FilaInfo>();
     fila.forEach((t, i) => m.set(t.id, { rank: i + 1, isFirst: i === 0, isLast: i === fila.length - 1 }));
@@ -350,7 +360,7 @@ export default function Dashboard({ initial }: { initial: Painel }) {
     void aplicarPrioridade([{ id, patch: { ordem: max + 1 } }]);
   };
   const mover = (id: string, dir: "up" | "down") => {
-    const fila = tickets.filter((t) => t.prioridadeOrdem != null)
+    const fila = tickets.filter((t) => t.prioridadeOrdem != null && !emAndamento(t))
       .sort((a, b) => (a.prioridadeOrdem! - b.prioridadeOrdem!) || a.criadoEm.localeCompare(b.criadoEm));
     const idx = fila.findIndex((t) => t.id === id);
     const j = dir === "up" ? idx - 1 : idx + 1;
@@ -458,8 +468,8 @@ export default function Dashboard({ initial }: { initial: Painel }) {
             <div className="title">Demandas</div>
             <div className="cap">
               {canEdit
-                ? "Defina o nível e a ordem da fila na coluna Prioridade — salva direto no HubSpot."
-                : "Clique no cabeçalho para ordenar. Entre como editor para definir a prioridade."}
+                ? "Defina o nível e a ordem da fila na coluna Prioridade — salva direto no HubSpot. Itens “Em andamento” ficam fixos no topo e não são repriorizados."
+                : "Clique no cabeçalho para ordenar. Itens “Em andamento” ficam fixos no topo. Entre como editor para definir a prioridade."}
             </div>
           </div>
           <div className="right"><div className="rlab">Tickets</div><div className="rnum">{fmt(tickets.length)}</div></div>

@@ -25,11 +25,15 @@ function proprietarioDe(id: string): { nome: string; id: string } {
     : { nome: "Mattheus Faleiro dos Santos", id: "91810791" };
 }
 
-// Prioridades de exemplo no snapshot (nível + ordem da fila), só p/ ilustrar a feature.
-const PRIORIDADE_SEED: Record<string, { nivel: string; ordem: number }> = {
-  "46068245154": { nivel: "URGENT", ordem: 1 }, // Sales | Painel p/ acompanhamento
-  "46074539114": { nivel: "HIGH", ordem: 2 },   // B2C | Migração fluxo TBW
-  "45852047224": { nivel: "MEDIUM", ordem: 3 }, // [B2B] | Painel tático dos farmers
+// Prioridades de exemplo no snapshot, só p/ ilustrar a feature.
+// Em andamento (sem ordem): nível congelado, fixo no topo, fora da fila.
+// Aguardando/Backlog (com ordem): a fila numerada (#1, #2, #3) com setas.
+const PRIORIDADE_SEED: Record<string, { nivel?: string; ordem?: number }> = {
+  "46068245154": { nivel: "URGENT" },           // Sales | Painel (Em andamento)
+  "46074539114": { nivel: "HIGH" },             // B2C | Migração TBW (Em andamento)
+  "45852047224": { nivel: "HIGH", ordem: 1 },   // [B2B] | Painel tático (Aguardando)
+  "45725553936": { nivel: "MEDIUM", ordem: 2 }, // B2C | Ajustes painel Pri (Aguardando)
+  "46108667909": { nivel: "LOW", ordem: 3 },    // B2B | alteração check list (Backlog)
 };
 
 // [id, subject, stageId, area, solicitante, email, dataPrevista, criadoEm]
