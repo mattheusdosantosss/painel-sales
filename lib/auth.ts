@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 
-export type Role = "admin" | "editor";
+export type Role = "admin" | "editor" | "viewer";
 export type SessionUser = { email: string; role: Role };
 
 export const COOKIE = "psa_session";
@@ -12,6 +12,11 @@ const MAX_AGE = 7 * 24 * 60 * 60; // 7 dias
 const USERS: { email: string; role: Role; hashEnv: string }[] = [
   { email: "crm.psa@profissionaissa.com", role: "admin", hashEnv: "AUTH_ADMIN_HASH" },
   { email: "eduardo.tavares@profissionaissa.com", role: "editor", hashEnv: "AUTH_EDUARDO_HASH" },
+  // perfil "viewer": logam e veem o painel, mas não elencam prioridade.
+  { email: "nicollas.lenuzza@profissionaissa.com", role: "viewer", hashEnv: "AUTH_NICOLLAS_HASH" },
+  { email: "leandro.bengochea@profissionaissa.com", role: "viewer", hashEnv: "AUTH_LEANDRO_HASH" },
+  { email: "cesar.filho@profissionaissa.com", role: "viewer", hashEnv: "AUTH_CESAR_HASH" },
+  { email: "diego.conceicao@profissionaissa.com", role: "viewer", hashEnv: "AUTH_DIEGO_HASH" },
 ];
 
 function secret(): string {

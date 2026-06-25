@@ -46,58 +46,53 @@ function StatusBadge({ label, isClosed }: { label: string; isClosed: boolean }) 
 
 const NIVEL_TONE: Record<string, string> = { LOW: "pr-low", MEDIUM: "pr-med", HIGH: "pr-high", URGENT: "pr-urgent" };
 
+type FilaInfo = { rank: number; isFirst: boolean; isLast: boolean };
+
 function PriorityCell({
-  t, canEdit, salvar,
+  t, canEdit, info, saving, salvarNivel, mover, priorizar, tirarDaFila,
 }: {
   t: Ticket;
   canEdit: boolean;
-  salvar: (id: string, patch: { nivel?: string; ordem?: number | null }) => Promise<boolean>;
+  info?: FilaInfo;
+  saving: boolean;
+  salvarNivel: (id: string, nivel: string) => void;
+  mover: (id: string, dir: "up" | "down") => void;
+  priorizar: (id: string) => void;
+  tirarDaFila: (id: string) => void;
 }) {
-  const [ordem, setOrdem] = useState<string>(t.prioridadeOrdem == null ? "" : String(t.prioridadeOrdem));
-  const [saving, setSaving] = useState(false);
-  useEffect(() => { setOrdem(t.prioridadeOrdem == null ? "" : String(t.prioridadeOrdem)); }, [t.prioridadeOrdem]);
+  const nivelBadge = t.prioridadeNivel ? (
+    <span className={`badge ${NIVEL_TONE[t.prioridadeNivel] ?? ""}`}><span className="bd" />{NIVEL_LABEL[t.prioridadeNivel] ?? t.prioridadeNivel}</span>
+  ) : null;
 
   if (!canEdit) {
-    if (!t.prioridadeNivel && t.prioridadeOrdem == null) return <span className="faint">—</span>;
+    if (!t.prioridadeNivel && !info) return <span className="faint">—</span>;
     return (
       <span className="prcell">
-        {t.prioridadeNivel && (
-          <span className={`badge ${NIVEL_TONE[t.prioridadeNivel] ?? ""}`}><span className="bd" />{NIVEL_LABEL[t.prioridadeNivel] ?? t.prioridadeNivel}</span>
-        )}
-        {t.prioridadeOrdem != null && <span className="ordnum">#{t.prioridadeOrdem}</span>}
+        {nivelBadge}
+        {info && <span className="rankpill">#{info.rank}</span>}
       </span>
     );
   }
 
-  async function mudarNivel(v: string) {
-    setSaving(true);
-    await salvar(t.id, { nivel: v });
-    setSaving(false);
-  }
-  async function salvarOrdem() {
-    const atual = t.prioridadeOrdem == null ? "" : String(t.prioridadeOrdem);
-    if (ordem === atual) return;
-    setSaving(true);
-    await salvar(t.id, { ordem: ordem === "" ? null : Number(ordem) });
-    setSaving(false);
-  }
-
   return (
     <span className={`prcell edit ${saving ? "saving" : ""}`}>
-      <select className="prsel" value={t.prioridadeNivel} onChange={(e) => mudarNivel(e.target.value)} disabled={saving}>
+      <select className="prsel" value={t.prioridadeNivel} onChange={(e) => salvarNivel(t.id, e.target.value)} disabled={saving}>
         <option value="">— nível</option>
         <option value="LOW">Baixa</option>
         <option value="MEDIUM">Média</option>
         <option value="HIGH">Alta</option>
         <option value="URGENT">Urgente</option>
       </select>
-      <input
-        className="prord" type="number" min={0} inputMode="numeric" placeholder="#"
-        value={ordem} disabled={saving}
-        onChange={(e) => setOrdem(e.target.value)}
-        onBlur={salvarOrdem}
-        onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-      />
+      {info ? (
+        <span className="rankctl">
+          <button className="rankbtn" title="Subir na fila" disabled={saving || info.isFirst} onClick={() => mover(t.id, "up")}>▲</button>
+          <span className="rankpill">#{info.rank}</span>
+          <button className="rankbtn" title="Descer na fila" disabled={saving || info.isLast} onClick={() => mover(t.id, "down")}>▼</button>
+          <button className="xbtn" title="Tirar da fila" disabled={saving} onClick={() => tirarDaFila(t.id)}>×</button>
+        </span>
+      ) : (
+        <button className="qbtn" title="Adicionar à fila de prioridade" disabled={saving} onClick={() => priorizar(t.id)}>+ fila</button>
+      )}
     </span>
   );
 }
@@ -124,11 +119,16 @@ function Bars({ data }: { data: { label: string; value: number }[] }) {
 type SortKey = "nome" | "prioridade" | "status" | "area" | "proprietario" | "solicitante" | "dataPrevista" | "criadoEm";
 
 function TicketsTable({
-  tickets, stages, areas, proprietarios, canEdit, salvar,
+  tickets, stages, areas, proprietarios, canEdit, filaInfo, savingIds, salvarNivel, mover, priorizar, tirarDaFila,
 }: {
   tickets: Ticket[]; stages: Stage[]; areas: string[]; proprietarios: string[];
   canEdit: boolean;
-  salvar: (id: string, patch: { nivel?: string; ordem?: number | null }) => Promise<boolean>;
+  filaInfo: Map<string, FilaInfo>;
+  savingIds: Set<string>;
+  salvarNivel: (id: string, nivel: string) => void;
+  mover: (id: string, dir: "up" | "down") => void;
+  priorizar: (id: string) => void;
+  tirarDaFila: (id: string) => void;
 }) {
   const [q, setQ] = useState("");
   const [area, setArea] = useState("");
@@ -228,7 +228,10 @@ function TicketsTable({
                 return (
                   <tr className="row" key={t.id}>
                     <td className="t-nome" title={t.nome}>{t.nome}</td>
-                    <td><PriorityCell t={t} canEdit={canEdit} salvar={salvar} /></td>
+                    <td><PriorityCell
+                      t={t} canEdit={canEdit} info={filaInfo.get(t.id)} saving={savingIds.has(t.id)}
+                      salvarNivel={salvarNivel} mover={mover} priorizar={priorizar} tirarDaFila={tirarDaFila}
+                    /></td>
                     <td><StatusBadge label={t.status} isClosed={t.isClosed} /></td>
                     <td><span className="badge area">{t.area || "—"}</span></td>
                     <td className="t-sol">{t.proprietario || "—"}</td>
@@ -259,6 +262,7 @@ export default function Dashboard({ initial }: { initial: Painel }) {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [user, setUser] = useState<SessionUser | null>(null);
   const [toast, setToast] = useState<{ msg: string; erro: boolean } | null>(null);
+  const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const t = (localStorage.getItem("psa-sales-theme") as "dark" | "light") || "dark";
@@ -292,43 +296,71 @@ export default function Dashboard({ initial }: { initial: Painel }) {
     setUser(null);
   }
 
+  const { tickets, stages, areas, proprietarios, fonte } = data;
   const canEdit = user?.role === "admin" || user?.role === "editor";
 
-  // Salva a prioridade com update otimista; reverte se o HubSpot recusar.
-  async function salvarPrioridade(id: string, patch: { nivel?: string; ordem?: number | null }): Promise<boolean> {
-    const antes = data.tickets.find((t) => t.id === id);
-    if (!antes) return false;
+  // fila de prioridade = tickets com ordem definida, em ordem crescente.
+  // a posição exibida (#1, #2…) é sempre recalculada a partir disso.
+  const filaInfo = useMemo(() => {
+    const fila = tickets.filter((t) => t.prioridadeOrdem != null)
+      .sort((a, b) => (a.prioridadeOrdem! - b.prioridadeOrdem!) || a.criadoEm.localeCompare(b.criadoEm));
+    const m = new Map<string, FilaInfo>();
+    fila.forEach((t, i) => m.set(t.id, { rank: i + 1, isFirst: i === 0, isLast: i === fila.length - 1 }));
+    return m;
+  }, [tickets]);
+
+  // aplica 1+ updates de prioridade com update otimista; reverte tudo se algum falhar.
+  async function aplicarPrioridade(updates: { id: string; patch: { nivel?: string; ordem?: number | null } }[]) {
+    const ids = updates.map((u) => u.id);
+    const antes = new Map(ids.map((id) => [id, data.tickets.find((t) => t.id === id)!]));
+    setSavingIds((p) => new Set([...Array.from(p), ...ids]));
     setData((d) => ({
       ...d,
-      tickets: d.tickets.map((t) => t.id === id ? {
-        ...t,
-        prioridadeNivel: "nivel" in patch ? (patch.nivel ?? "") : t.prioridadeNivel,
-        prioridadeOrdem: "ordem" in patch ? (patch.ordem ?? null) : t.prioridadeOrdem,
-      } : t),
+      tickets: d.tickets.map((t) => {
+        const u = updates.find((x) => x.id === t.id);
+        if (!u) return t;
+        return {
+          ...t,
+          prioridadeNivel: "nivel" in u.patch ? (u.patch.nivel ?? "") : t.prioridadeNivel,
+          prioridadeOrdem: "ordem" in u.patch ? (u.patch.ordem ?? null) : t.prioridadeOrdem,
+        };
+      }),
     }));
     try {
-      const res = await fetch("/api/priority", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, ...patch }),
-      });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        throw new Error(d.error || "Falha ao salvar.");
-      }
+      const ress = await Promise.all(updates.map((u) =>
+        fetch("/api/priority", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: u.id, ...u.patch }) })
+      ));
+      const bad = ress.find((r) => !r.ok);
+      if (bad) { const d = await bad.json().catch(() => ({})); throw new Error(d.error || "Falha ao salvar."); }
       setToast({ msg: "Prioridade salva no HubSpot.", erro: false });
       setTimeout(() => setToast(null), 2500);
-      return true;
     } catch (e: any) {
-      // reverte
-      setData((d) => ({ ...d, tickets: d.tickets.map((t) => t.id === id ? antes : t) }));
+      setData((d) => ({ ...d, tickets: d.tickets.map((t) => antes.has(t.id) ? antes.get(t.id)! : t) }));
       setToast({ msg: e?.message || "Falha ao salvar.", erro: true });
       setTimeout(() => setToast(null), 4500);
-      return false;
+    } finally {
+      setSavingIds((p) => { const n = new Set(p); ids.forEach((i) => n.delete(i)); return n; });
     }
   }
 
-  const { tickets, stages, areas, proprietarios, fonte } = data;
+  const salvarNivel = (id: string, nivel: string) => { void aplicarPrioridade([{ id, patch: { nivel } }]); };
+  const tirarDaFila = (id: string) => { void aplicarPrioridade([{ id, patch: { ordem: null } }]); };
+  const priorizar = (id: string) => {
+    const max = tickets.reduce((mx, t) => Math.max(mx, t.prioridadeOrdem ?? 0), 0);
+    void aplicarPrioridade([{ id, patch: { ordem: max + 1 } }]);
+  };
+  const mover = (id: string, dir: "up" | "down") => {
+    const fila = tickets.filter((t) => t.prioridadeOrdem != null)
+      .sort((a, b) => (a.prioridadeOrdem! - b.prioridadeOrdem!) || a.criadoEm.localeCompare(b.criadoEm));
+    const idx = fila.findIndex((t) => t.id === id);
+    const j = dir === "up" ? idx - 1 : idx + 1;
+    if (idx < 0 || j < 0 || j >= fila.length) return;
+    const A = fila[idx], B = fila[j];
+    void aplicarPrioridade([
+      { id: A.id, patch: { ordem: B.prioridadeOrdem } },
+      { id: B.id, patch: { ordem: A.prioridadeOrdem } },
+    ]);
+  };
 
   const kpis = useMemo(() => {
     const concluidas = tickets.filter((t) => t.isClosed).length;
@@ -374,7 +406,7 @@ export default function Dashboard({ initial }: { initial: Painel }) {
           {user ? (
             <div className="userbox">
               <span className="uemail" title={user.email}>{user.email.split("@")[0]}</span>
-              <span className="urole">{user.role === "admin" ? "admin" : "editor"}</span>
+              <span className="urole">{user.role === "admin" ? "admin" : user.role === "editor" ? "editor" : "leitura"}</span>
               <button className="iconbtn" onClick={sair} title="Sair">⎋</button>
             </div>
           ) : (
@@ -434,7 +466,8 @@ export default function Dashboard({ initial }: { initial: Painel }) {
         </div>
         <TicketsTable
           tickets={tickets} stages={stages} areas={areas} proprietarios={proprietarios}
-          canEdit={canEdit} salvar={salvarPrioridade}
+          canEdit={canEdit} filaInfo={filaInfo} savingIds={savingIds}
+          salvarNivel={salvarNivel} mover={mover} priorizar={priorizar} tirarDaFila={tirarDaFila}
         />
       </div>
 

@@ -203,7 +203,10 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 
 /* ---------- prioridade ---------- */
 .prcell { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
-.ordnum { font-family: var(--font-mono), monospace; font-size: 11px; font-weight: 700; color: var(--muted); }
+.rankpill {
+  font-family: var(--font-mono), monospace; font-size: 11px; font-weight: 700; color: var(--accent);
+  background: var(--accent-soft); border-radius: 6px; padding: 2px 7px; min-width: 26px; text-align: center;
+}
 .pr-low { color: var(--green); border-color: color-mix(in srgb, var(--green) 35%, transparent); background: rgba(70,209,127,0.1); }
 .pr-low .bd { background: var(--green); }
 .pr-med { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 40%, transparent); background: rgba(255,206,77,0.1); }
@@ -220,11 +223,18 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
   border-radius: 7px; padding: 4px 6px; font: inherit; font-size: 11.5px; outline: none; cursor: pointer;
 }
 .prsel:focus { border-color: var(--accent); }
-.prord {
-  width: 46px; background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
-  border-radius: 7px; padding: 4px 6px; font: inherit; font-size: 11.5px; outline: none; text-align: center;
+.rankctl { display: inline-flex; align-items: center; gap: 3px; }
+.rankbtn, .xbtn, .qbtn {
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
+  border-radius: 6px; cursor: pointer; font: inherit; line-height: 1; transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
-.prord:focus { border-color: var(--accent); }
+.rankbtn { width: 20px; height: 20px; display: grid; place-items: center; font-size: 9px; }
+.rankbtn:hover:not(:disabled) { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.rankbtn:disabled, .xbtn:disabled, .qbtn:disabled { opacity: 0.35; cursor: default; }
+.xbtn { width: 20px; height: 20px; display: grid; place-items: center; font-size: 13px; margin-left: 2px; }
+.xbtn:hover:not(:disabled) { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, transparent); }
+.qbtn { padding: 4px 9px; font-size: 11px; font-weight: 600; }
+.qbtn:hover:not(:disabled) { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: var(--accent-soft); }
 
 /* ---------- header: usuário / botão ghost ---------- */
 .btn.ghost { background: transparent; color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); text-decoration: none; display: inline-flex; align-items: center; }

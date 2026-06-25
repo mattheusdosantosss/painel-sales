@@ -25,6 +25,13 @@ function proprietarioDe(id: string): { nome: string; id: string } {
     : { nome: "Mattheus Faleiro dos Santos", id: "91810791" };
 }
 
+// Prioridades de exemplo no snapshot (nível + ordem da fila), só p/ ilustrar a feature.
+const PRIORIDADE_SEED: Record<string, { nivel: string; ordem: number }> = {
+  "46068245154": { nivel: "URGENT", ordem: 1 }, // Sales | Painel p/ acompanhamento
+  "46074539114": { nivel: "HIGH", ordem: 2 },   // B2C | Migração fluxo TBW
+  "45852047224": { nivel: "MEDIUM", ordem: 3 }, // [B2B] | Painel tático dos farmers
+};
+
 // [id, subject, stageId, area, solicitante, email, dataPrevista, criadoEm]
 type Row = [string, string, string, string, string, string, string, string];
 
@@ -76,8 +83,8 @@ export const SEED_TICKETS: Ticket[] = ROWS.map(
       email,
       dataPrevista,
       criadoEm,
-      prioridadeNivel: "",
-      prioridadeOrdem: null,
+      prioridadeNivel: PRIORIDADE_SEED[id]?.nivel ?? "",
+      prioridadeOrdem: PRIORIDADE_SEED[id]?.ordem ?? null,
     };
   }
 );
