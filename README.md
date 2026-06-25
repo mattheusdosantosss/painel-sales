@@ -32,9 +32,31 @@ npm run dev
 2. Na Vercel: New Project → importe o repo.
 3. Em **Settings → Environment Variables**:
    - `HUBSPOT_TOKEN` = token de Private App
-     (scopes: `crm.objects.tickets.read` + `crm.objects.owners.read`).
+     (scopes: `crm.objects.tickets.read` + `crm.objects.owners.read`
+     + `crm.objects.tickets.write` p/ salvar prioridade).
+   - `AUTH_SECRET` = chave aleatória p/ assinar a sessão (`openssl rand -hex 32`).
+   - `AUTH_ADMIN_HASH` / `AUTH_EDUARDO_HASH` = hash `salt:key` (scrypt) de cada senha.
    - (opcional) `HUBSPOT_TICKETS_PIPELINE` e `HUBSPOT_AREAS` se mudarem no HubSpot.
 4. Deploy.
+
+## Login e permissões
+
+- O painel é **visível sem login**; o login libera a **edição de prioridade**.
+- 2 perfis (definidos em `lib/auth.ts`): **admin** (`crm.psa@profissionaissa.com`)
+  e **editor** (`eduardo.tavares@profissionaissa.com`). As senhas ficam só como
+  hash nas env vars `AUTH_*`.
+- Gerar o hash de uma senha:
+  ```bash
+  node -e "const c=require('crypto');const s=c.randomBytes(16).toString('hex');console.log(s+':'+c.scryptSync(process.argv[1],s,64).toString('hex'))" "SUA_SENHA"
+  ```
+
+## Prioridade (elencar a fila)
+
+- O editor define, por ticket, o **nível** (Baixa/Média/Alta/Urgente) e a **ordem**
+  da fila. Salva direto no HubSpot:
+  - nível → `hs_ticket_priority`
+  - ordem → `prioridade_de_demandas`
+- A tabela pode ser ordenada/filtrada por prioridade.
 
 ## Onde está cada coisa
 
