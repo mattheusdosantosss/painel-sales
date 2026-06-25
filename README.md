@@ -41,10 +41,12 @@ npm run dev
 
 ## Login e permissões
 
-- O painel é **visível sem login**; o login libera a **edição de prioridade**.
-- 2 perfis (definidos em `lib/auth.ts`): **admin** (`crm.psa@profissionaissa.com`)
-  e **editor** (`eduardo.tavares@profissionaissa.com`). As senhas ficam só como
-  hash nas env vars `AUTH_*`.
+- O painel **exige login** para ser visto (`/` redireciona para `/login` sem sessão).
+- 3 perfis (definidos em `lib/auth.ts`):
+  - **admin** (`crm.psa@profissionaissa.com`) — faz tudo.
+  - **editor** (`eduardo.tavares@profissionaissa.com`) — define prioridade.
+  - **viewer** (nicollas, leandro, cesar, diego) — só visualizam.
+- As senhas ficam só como hash nas env vars `AUTH_*_HASH`.
 - Gerar o hash de uma senha:
   ```bash
   node -e "const c=require('crypto');const s=c.randomBytes(16).toString('hex');console.log(s+':'+c.scryptSync(process.argv[1],s,64).toString('hex'))" "SUA_SENHA"
@@ -52,10 +54,10 @@ npm run dev
 
 ## Prioridade (elencar a fila)
 
-- O editor define, por ticket, o **nível** (Baixa/Média/Alta/Urgente) e a **ordem**
-  da fila. Salva direto no HubSpot:
-  - nível → `hs_ticket_priority`
-  - ordem → `prioridade_de_demandas`
+- O editor define, por ticket, o **nível** (Baixa/Média/Alta/Urgente, em dropdown)
+  e a **ordem da fila** (botão `+ fila` para priorizar; setas ↑/↓ para reordenar;
+  `×` para tirar da fila). A posição (#1, #2…) é recalculada automaticamente.
+- Salva direto no HubSpot: nível → `hs_ticket_priority`; ordem → `prioridade_de_demandas`.
 - A tabela pode ser ordenada/filtrada por prioridade.
 
 ## Onde está cada coisa
