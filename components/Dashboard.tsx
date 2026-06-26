@@ -29,6 +29,27 @@ function estaAtrasado(t: Ticket): boolean {
 // "Em andamento" = já está em execução: fica fixo no topo e não é repriorizado.
 function emAndamento(t: Ticket): boolean { return /andamento/i.test(t.status); }
 
+// Ordem fixa dos status na listagem (após o pin de "Em andamento"):
+// Em andamento → Backlog da Semana → Aguardando Aprovação → Backlog → Concluído.
+function statusRank(label: string): number {
+  const l = (label || "").toLowerCase();
+  if (/andamento/.test(l)) return 0;
+  if (/backlog.*semana|semana/.test(l)) return 1;
+  if (/aguard|aprova/.test(l)) return 2;
+  if (/backlog/.test(l)) return 3;
+  if (/conclu|finaliz/.test(l)) return 9;
+  return 8; // qualquer status inesperado fica antes de "Concluído"
+}
+
+const NIVEL_RANK: Record<string, number> = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1, "": 0 };
+// fila de prioridade: ordem definida primeiro (vazio por último), desempata pelo nível.
+function cmpPrioridade(a: Ticket, b: Ticket): number {
+  const ao = a.prioridadeOrdem ?? Number.MAX_SAFE_INTEGER;
+  const bo = b.prioridadeOrdem ?? Number.MAX_SAFE_INTEGER;
+  if (ao !== bo) return ao - bo;
+  return (NIVEL_RANK[b.prioridadeNivel] ?? 0) - (NIVEL_RANK[a.prioridadeNivel] ?? 0);
+}
+
 // tom visual do status a partir do estágio
 function toneDe(label: string, isClosed: boolean): string {
   const l = label.toLowerCase();
@@ -141,7 +162,7 @@ function TicketsTable({
   const [status, setStatus] = useState("");
   const [prop, setProp] = useState("");
   const [nivel, setNivel] = useState("");
-  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "criadoEm", dir: -1 });
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "status", dir: 1 });
 
   const filtrados = useMemo(() => {
     const termo = q.trim().toLowerCase();
@@ -157,20 +178,23 @@ function TicketsTable({
       return true;
     });
     const { key, dir } = sort;
-    const nivelRank: Record<string, number> = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1, "": 0 };
     arr = arr.slice().sort((a, b) => {
       // "Em andamento" sempre no topo, independente do critério de ordenação.
       const ae = emAndamento(a) ? 0 : 1, be = emAndamento(b) ? 0 : 1;
       if (ae !== be) return ae - be;
-      let av: string | number = "", bv: string | number = "";
-      if (key === "status") { av = a.statusOrder; bv = b.statusOrder; }
-      else if (key === "prioridade") {
-        // ordem da fila primeiro (vazio por último), desempata pelo nível
-        av = a.prioridadeOrdem ?? Number.MAX_SAFE_INTEGER;
-        bv = b.prioridadeOrdem ?? Number.MAX_SAFE_INTEGER;
-        if (av === bv) { av = -(nivelRank[a.prioridadeNivel] ?? 0); bv = -(nivelRank[b.prioridadeNivel] ?? 0); }
+
+      if (key === "status") {
+        // ordem fixa dos status; dentro do mesmo status, pela fila de prioridade
+        const r = statusRank(a.status) - statusRank(b.status);
+        if (r !== 0) return r * dir;
+        return cmpPrioridade(a, b) || b.criadoEm.localeCompare(a.criadoEm);
       }
-      else if (key === "dataPrevista") {
+      if (key === "prioridade") {
+        return (cmpPrioridade(a, b) || b.criadoEm.localeCompare(a.criadoEm)) * dir;
+      }
+
+      let av: string | number = "", bv: string | number = "";
+      if (key === "dataPrevista") {
         av = a.dataPrevista || "9999-99-99"; bv = b.dataPrevista || "9999-99-99";
       }
       else { av = (a as any)[key] ?? ""; bv = (b as any)[key] ?? ""; }
