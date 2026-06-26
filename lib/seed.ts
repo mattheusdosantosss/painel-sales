@@ -5,11 +5,15 @@ import type { Ticket, Stage } from "./types";
 // HUBSPOT_TOKEN configurado — assim o painel renderiza com dados de verdade.
 // Com o token, lib/hubspot.ts substitui isto pela leitura ao vivo.
 
+// Estágios do pipeline "Performance | MKT" (confirmados no HubSpot em 26/06/2026).
+// Em produção, lib/hubspot.ts substitui isto pela leitura ao vivo. A ordem aqui
+// segue a listagem desejada (Em andamento → Backlog da Semana → Aguardando → Backlog → Concluído).
 export const SEED_STAGES: Stage[] = [
-  { id: "1164776347", label: "Backlog", order: 0, isClosed: false },
-  { id: "1311051533", label: "Em andamento", order: 1, isClosed: false },
+  { id: "1311051533", label: "Em andamento", order: 0, isClosed: false },
+  { id: "1367455656", label: "Backlog da Semana", order: 1, isClosed: false },
   { id: "1164776348", label: "Aguardando aprovação", order: 2, isClosed: false },
-  { id: "1164776349", label: "Concluído", order: 3, isClosed: true },
+  { id: "1164776347", label: "Backlog", order: 3, isClosed: false },
+  { id: "1164776349", label: "Concluído", order: 4, isClosed: true },
 ];
 
 const STAGE = new Map(SEED_STAGES.map((s) => [s.id, s]));
