@@ -11,6 +11,7 @@ const MAX_AGE = 7 * 24 * 60 * 60; // 7 dias
 // (gerar hash: scrypt(senha, salt) → "salt:key" hex; ver README.)
 const USERS: { email: string; role: Role; hashEnv: string }[] = [
   { email: "crm.psa@profissionaissa.com", role: "admin", hashEnv: "AUTH_ADMIN_HASH" },
+  { email: "aline.maurente@profissionaissa.com", role: "admin", hashEnv: "AUTH_ALINE_HASH" },
   { email: "eduardo.tavares@profissionaissa.com", role: "editor", hashEnv: "AUTH_EDUARDO_HASH" },
   // perfil "viewer": logam e veem o painel, mas não elencam prioridade.
   { email: "nicollas.lenuzza@profissionaissa.com", role: "viewer", hashEnv: "AUTH_NICOLLAS_HASH" },
