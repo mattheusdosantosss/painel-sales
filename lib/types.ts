@@ -12,6 +12,8 @@ export type Ticket = {
   email: string;        // e_mail_do_solicitante
   dataPrevista: string; // "YYYY-MM-DD" ou ""
   criadoEm: string;     // ISO ou ""
+  descricao: string;    // content (Descrição do ticket)
+  observacoes: string;  // observacoes (retorno/Observações)
   // prioridade definida pelo time (write-back no HubSpot)
   prioridadeNivel: string;       // "" | "LOW" | "MEDIUM" | "HIGH" | "URGENT" (hs_ticket_priority)
   prioridadeOrdem: number | null; // posição na fila (prioridade_de_demandas)

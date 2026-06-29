@@ -124,6 +124,66 @@ function PriorityCell({
   );
 }
 
+// link do ticket dentro do HubSpot (portal da PSA)
+function hubspotUrl(id: string) {
+  return `https://app.hubspot.com/contacts/49656171/record/0-5/${id}`;
+}
+
+function TicketModal({ t, rank, onClose }: { t: Ticket; rank?: number; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const atrasado = estaAtrasado(t);
+  const prioridade = emAndamento(t)
+    ? "Em execução (não repriorizado)"
+    : t.prioridadeNivel || rank != null
+      ? `${t.prioridadeNivel ? NIVEL_LABEL[t.prioridadeNivel] : "—"}${rank != null ? ` · #${rank} na fila` : ""}`
+      : "—";
+
+  return (
+    <div className="modal-back" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-head">
+          <div>
+            <div className="modal-title">{t.nome}</div>
+            <div className="modal-sub"><StatusBadge label={t.status} isClosed={t.isClosed} /></div>
+          </div>
+          <button className="iconbtn" onClick={onClose} title="Fechar">✕</button>
+        </div>
+
+        <div className="modal-body">
+          <div className="modal-grid">
+            <div className="mf"><div className="ml">Área do solicitante</div><div className="mv">{t.area || "—"}</div></div>
+            <div className="mf"><div className="ml">Proprietário</div><div className="mv">{t.proprietario || "—"}</div></div>
+            <div className="mf"><div className="ml">Solicitante</div><div className="mv">{t.solicitante || "—"}</div></div>
+            <div className="mf"><div className="ml">E-mail</div><div className="mv">{t.email ? <a href={`mailto:${t.email}`}>{t.email}</a> : "—"}</div></div>
+            <div className="mf"><div className="ml">Data prevista</div><div className={`mv ${atrasado ? "atrasado" : ""}`}>{dataCurta(t.dataPrevista)}{atrasado ? " · atrasado" : ""}</div></div>
+            <div className="mf"><div className="ml">Prioridade</div><div className="mv">{prioridade}</div></div>
+          </div>
+
+          <div className="modal-sec">
+            <div className="ml">Descrição do ticket</div>
+            <div className="modal-text">{t.descricao || <span className="faint">— sem descrição —</span>}</div>
+          </div>
+
+          <div className="modal-sec">
+            <div className="ml">Observações</div>
+            <div className="modal-text">{t.observacoes || <span className="faint">— sem observações —</span>}</div>
+          </div>
+        </div>
+
+        <div className="modal-foot">
+          <span className="faint">Criado em {dataCurta(t.criadoEm.slice(0, 10))}</span>
+          <a className="btn ghost" href={hubspotUrl(t.id)} target="_blank" rel="noreferrer">Abrir no HubSpot ↗</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Bars({ data }: { data: { label: string; value: number }[] }) {
   if (!data.length) return <div className="empty">sem dados</div>;
   const max = Math.max(...data.map((d) => d.value), 1);
@@ -163,6 +223,7 @@ function TicketsTable({
   const [prop, setProp] = useState("");
   const [nivel, setNivel] = useState("");
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "status", dir: 1 });
+  const [sel, setSel] = useState<Ticket | null>(null);
 
   const filtrados = useMemo(() => {
     const termo = q.trim().toLowerCase();
@@ -260,7 +321,7 @@ function TicketsTable({
                 const atrasado = estaAtrasado(t);
                 return (
                   <tr className={`row ${emAndamento(t) ? "row-doing" : ""}`} key={t.id}>
-                    <td className="t-nome" title={t.nome}>{t.nome}</td>
+                    <td className="t-nome"><button className="linklike" title="Ver detalhes" onClick={() => setSel(t)}>{t.nome}</button></td>
                     <td><PriorityCell
                       t={t} canEdit={canEdit} info={filaInfo.get(t.id)} saving={savingIds.has(t.id)}
                       salvarNivel={salvarNivel} mover={mover} priorizar={priorizar} tirarDaFila={tirarDaFila}
@@ -284,6 +345,8 @@ function TicketsTable({
           </table>
         </div>
       </div>
+
+      {sel && <TicketModal t={sel} rank={filaInfo.get(sel.id)?.rank} onClose={() => setSel(null)} />}
     </>
   );
 }

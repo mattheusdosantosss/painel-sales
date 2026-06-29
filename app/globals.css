@@ -171,6 +171,39 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .tbl tbody tr.row { transition: background 0.12s; }
 .tbl tbody tr.row:hover { background: var(--accent-soft); }
 .t-nome { font-weight: 600; color: var(--text); max-width: 360px; }
+.linklike {
+  background: none; border: 0; padding: 0; margin: 0; font: inherit; font-weight: 600;
+  color: var(--text); text-align: left; cursor: pointer; line-height: 1.35;
+}
+.linklike:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+/* ---------- modal de detalhes do ticket ---------- */
+.modal-back {
+  position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.55);
+  display: grid; place-items: center; padding: 24px; animation: rise 0.15s ease;
+}
+.modal {
+  width: 100%; max-width: 640px; max-height: 86vh; display: flex; flex-direction: column;
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+}
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 18px 20px 14px; border-bottom: 1px solid var(--border-soft); }
+.modal-title { font-size: 16px; font-weight: 800; line-height: 1.3; }
+.modal-sub { margin-top: 8px; }
+.modal-body { padding: 16px 20px; overflow-y: auto; }
+.modal-body::-webkit-scrollbar { width: 9px; }
+.modal-body::-webkit-scrollbar-thumb { background: var(--track); border-radius: 9px; border: 2px solid var(--panel); }
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-soft); border: 1px solid var(--border-soft); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+.mf { background: var(--panel-2); padding: 11px 13px; }
+.ml { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--faint); margin-bottom: 4px; }
+.mv { font-size: 13.5px; font-weight: 500; word-break: break-word; }
+.mv a { color: var(--accent); text-decoration: none; }
+.mv.atrasado { color: var(--red); font-weight: 700; }
+.modal-sec { margin-bottom: 16px; }
+.modal-sec .ml { margin-bottom: 6px; }
+.modal-text { font-size: 13.5px; line-height: 1.55; color: var(--text); white-space: pre-wrap; word-break: break-word; background: var(--panel-2); border: 1px solid var(--border-soft); border-radius: 10px; padding: 12px 14px; }
+.modal-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--border-soft); font-size: 12px; }
+@media (max-width: 560px) { .modal-grid { grid-template-columns: 1fr; } }
 .t-sol { font-weight: 500; }
 .t-email { font-family: var(--font-mono), monospace; font-size: 11.5px; color: var(--muted); }
 .t-email a { color: inherit; text-decoration: none; }

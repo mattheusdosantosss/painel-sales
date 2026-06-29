@@ -93,6 +93,8 @@ export const SEED_TICKETS: Ticket[] = ROWS.map(
       criadoEm,
       prioridadeNivel: PRIORIDADE_SEED[id]?.nivel ?? "",
       prioridadeOrdem: PRIORIDADE_SEED[id]?.ordem ?? null,
+      descricao: "",
+      observacoes: "",
     };
   }
 );

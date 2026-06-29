@@ -26,6 +26,8 @@ const PROPS = [
   "createdate",
   "hs_ticket_priority",
   "prioridade_de_demandas",
+  "content",
+  "observacoes",
 ];
 
 type HsTicket = { id?: string; properties: Record<string, string | null> };
@@ -180,6 +182,8 @@ export async function getHubspotPainel(): Promise<{
       prioridadeOrdem: p.prioridade_de_demandas != null && p.prioridade_de_demandas !== ""
         ? Number(p.prioridade_de_demandas)
         : null,
+      descricao: (p.content ?? "").trim(),
+      observacoes: (p.observacoes ?? "").trim(),
     };
   });
 
