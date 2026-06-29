@@ -110,7 +110,8 @@ function PriorityCell({
         <option value="HIGH">Alta</option>
         <option value="URGENT">Urgente</option>
       </select>
-      {info ? (
+      {t.isClosed ? null /* concluída: sem ordem de execução, só o nível */
+        : info ? (
         <span className="rankctl">
           <button className="rankbtn" title="Subir na fila" disabled={saving || info.isFirst} onClick={() => mover(t.id, "up")}>▲</button>
           <span className="rankpill">#{info.rank}</span>
@@ -398,8 +399,8 @@ export default function Dashboard({ initial }: { initial: Painel }) {
   // fila de prioridade = tickets com ordem definida, em ordem crescente.
   // a posição exibida (#1, #2…) é sempre recalculada a partir disso.
   const filaInfo = useMemo(() => {
-    // a fila numerada é só dos que ainda aguardam — "Em andamento" sai da fila.
-    const fila = tickets.filter((t) => t.prioridadeOrdem != null && !emAndamento(t))
+    // a fila numerada é só dos que ainda aguardam — "Em andamento" e concluídas saem da fila.
+    const fila = tickets.filter((t) => t.prioridadeOrdem != null && !emAndamento(t) && !t.isClosed)
       .sort((a, b) => (a.prioridadeOrdem! - b.prioridadeOrdem!) || a.criadoEm.localeCompare(b.criadoEm));
     const m = new Map<string, FilaInfo>();
     fila.forEach((t, i) => m.set(t.id, { rank: i + 1, isFirst: i === 0, isLast: i === fila.length - 1 }));
@@ -447,7 +448,7 @@ export default function Dashboard({ initial }: { initial: Painel }) {
     void aplicarPrioridade([{ id, patch: { ordem: max + 1 } }]);
   };
   const mover = (id: string, dir: "up" | "down") => {
-    const fila = tickets.filter((t) => t.prioridadeOrdem != null && !emAndamento(t))
+    const fila = tickets.filter((t) => t.prioridadeOrdem != null && !emAndamento(t) && !t.isClosed)
       .sort((a, b) => (a.prioridadeOrdem! - b.prioridadeOrdem!) || a.criadoEm.localeCompare(b.criadoEm));
     const idx = fila.findIndex((t) => t.id === id);
     const j = dir === "up" ? idx - 1 : idx + 1;

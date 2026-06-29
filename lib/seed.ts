@@ -38,6 +38,7 @@ const PRIORIDADE_SEED: Record<string, { nivel?: string; ordem?: number }> = {
   "45852047224": { nivel: "HIGH", ordem: 1 },   // [B2B] | Painel tático (Aguardando)
   "45725553936": { nivel: "MEDIUM", ordem: 2 }, // B2C | Ajustes painel Pri (Aguardando)
   "46108667909": { nivel: "LOW", ordem: 3 },    // B2B | alteração check list (Backlog)
+  "45665036156": { nivel: "HIGH", ordem: 5 },   // TBS | Dash Max (CONCLUÍDA): mostra só o nível, sai da fila
 };
 
 // [id, subject, stageId, area, solicitante, email, dataPrevista, criadoEm]
