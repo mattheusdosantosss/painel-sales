@@ -4,7 +4,7 @@
    3) fallback: Archivo (definida no layout via Google Fonts). */
 @font-face {
   font-family: "Bruta";
-  src: local("Bruta"), local("Bruta Global"), local("BrutaGlobal-Regular"),
+  src: local("Bruta Pro"), local("BrutaPro-Regular"), local("Bruta"), local("Bruta Global"),
        url("/fonts/Bruta.woff2") format("woff2");
   font-weight: 100 900;
   font-style: normal;
