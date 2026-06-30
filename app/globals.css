@@ -1,3 +1,16 @@
+/* Bruta (fonte de marca, comercial — não vem de CDN).
+   1) local(): usa a Bruta instalada na máquina (designers/admin já veem);
+   2) url(): self-hosted — coloque os .woff2 em public/fonts/ p/ valer pra todos;
+   3) fallback: Archivo (definida no layout via Google Fonts). */
+@font-face {
+  font-family: "Bruta";
+  src: local("Bruta"), local("Bruta Global"), local("BrutaGlobal-Regular"),
+       url("/fonts/Bruta.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --accent: #ff6a1a;
   --accent-2: #ffa24d;
@@ -8,6 +21,7 @@
   --blue: #5aa9ff;
   --radius: 14px;
   --font-sans: "Archivo";
+  --font-head: "Bruta", "Archivo";
   --font-mono: "JetBrains Mono";
 
   /* dark (default) */
@@ -312,4 +326,15 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 @media (max-width: 980px) {
   .kpis { grid-template-columns: repeat(2, 1fr); }
   .grid2 { grid-template-columns: 1fr; }
+}
+
+/* ---------- fonte Bruta nos cabeçalhos e títulos ---------- */
+.brand h1,
+.pill,
+.card-head .title,
+.card-head .right .rlab,
+.kpi .lab,
+.tbl thead th,
+.modal-title {
+  font-family: var(--font-head), system-ui, sans-serif;
 }
